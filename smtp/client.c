@@ -1,75 +1,84 @@
+#include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <netdb.h>
+#include <arpa/inet.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <netinet/in.h>
 #include <unistd.h>
 
-#define BUF_SIZE 256
-
-int main(int argc, char *argv[])
+int main()
 {
-    struct sockaddr_in server;
-    char str[50] = "hi";
-    char mail_f[50], mail_to[50], msg[20];
+    char buf[100], msg[100];
+    char mail_f[50], mail_to[50];
+    int k, t = 0;
     char c;
-    int t = 0;
 
-    socklen_t l = sizeof(server);
+    int sock_desc;
+    socklen_t len;
 
-    if (argc != 3)
-        printf("Input format not correct");
+    struct sockaddr_in server;
 
-    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockfd == -1)
-        printf("Error in socket()");
+    sock_desc = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock_desc == -1)
+        printf("Error in socket creation");
 
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = htons(atoi(argv[2]));
+    server.sin_port = htons(2500);   // same port as server
+
+    len = sizeof(server);
 
     /* Initial message */
-    sendto(sockfd, str, sizeof(str), 0, (struct sockaddr *)&server, sizeof(server));
+    strcpy(buf, "hi");
 
-    recvfrom(sockfd, str, sizeof(str), 0, (struct sockaddr *)&server, &l);
-    printf("Greeting message: %s\n", str);
+    k = sendto(sock_desc, buf, 100, 0, (struct sockaddr *)&server, sizeof(server));
+    if (k == -1)
+        printf("Error in sending");
+
+    k = recvfrom(sock_desc, buf, 100, 0, (struct sockaddr *)&server, &len);
+    printf("Server: %s\n", buf);
 
     /* HELO */
-    strcpy(str, "HELO 127.0.0.1");
-    sendto(sockfd, str, sizeof(str), 0, (struct sockaddr *)&server, sizeof(server));
+    strcpy(buf, "HELO 127.0.0.1");
 
-    recvfrom(sockfd, str, sizeof(str), 0, (struct sockaddr *)&server, &l);
-    printf("Server: %s\n", str);
+    sendto(sock_desc, buf, 100, 0, (struct sockaddr *)&server, sizeof(server));
+
+    recvfrom(sock_desc, buf, 100, 0, (struct sockaddr *)&server, &len);
+    printf("Server: %s\n", buf);
 
     /* MAIL FROM */
     printf("Enter FROM address: ");
     scanf("%s", mail_f);
 
-    strcpy(str, "MAIL FROM ");
-    strcat(str, mail_f);
+    strcpy(buf, "MAIL FROM ");
+    strcat(buf, mail_f);
 
-    sendto(sockfd, str, sizeof(str), 0, (struct sockaddr *)&server, sizeof(server));
+    sendto(sock_desc, buf, 100, 0, (struct sockaddr *)&server, sizeof(server));
 
-    recvfrom(sockfd, str, sizeof(str), 0, (struct sockaddr *)&server, &l);
+    recvfrom(sock_desc, buf, 100, 0, (struct sockaddr *)&server, &len);
+    printf("Server: %s\n", buf);
 
     /* RCPT TO */
     printf("Enter TO address: ");
     scanf("%s", mail_to);
 
-    strcpy(str, "RCPT TO ");
-    strcat(str, mail_to);
+    strcpy(buf, "RCPT TO ");
+    strcat(buf, mail_to);
 
-    sendto(sockfd, str, sizeof(str), 0, (struct sockaddr *)&server, sizeof(server));
+    sendto(sock_desc, buf, 100, 0, (struct sockaddr *)&server, sizeof(server));
 
-    recvfrom(sockfd, str, sizeof(str), 0, (struct sockaddr *)&server, &l);
+    recvfrom(sock_desc, buf, 100, 0, (struct sockaddr *)&server, &len);
+    printf("Server: %s\n", buf);
 
     /* DATA */
-    strcpy(str, "DATA");
-    sendto(sockfd, str, sizeof(str), 0, (struct sockaddr *)&server, sizeof(server));
+    strcpy(buf, "DATA");
 
-    recvfrom(sockfd, str, sizeof(str), 0, (struct sockaddr *)&server, &l);
+    sendto(sock_desc, buf, 100, 0, (struct sockaddr *)&server, sizeof(server));
 
+    recvfrom(sock_desc, buf, 100, 0, (struct sockaddr *)&server, &len);
+    printf("Server: %s\n", buf);
+
+    /* Mail body */
     printf("Enter mail body ($ to end): ");
 
     while (1)
@@ -83,16 +92,19 @@ int main(int argc, char *argv[])
         msg[t++] = c;
     }
 
-    sendto(sockfd, msg, sizeof(msg), 0, (struct sockaddr *)&server, sizeof(server));
+    sendto(sock_desc, msg, 100, 0, (struct sockaddr *)&server, sizeof(server));
 
     /* QUIT */
-    strcpy(str, "QUIT");
-    sendto(sockfd, str, sizeof(str), 0, (struct sockaddr *)&server, sizeof(server));
+    strcpy(buf, "QUIT");
 
-    recvfrom(sockfd, str, sizeof(str), 0, (struct sockaddr *)&server, &l);
+    sendto(sock_desc, buf, 100, 0, (struct sockaddr *)&server, sizeof(server));
 
+    recvfrom(sock_desc, buf, 100, 0, (struct sockaddr *)&server, &len);
+
+    printf("Server: %s\n", buf);
     printf("Connection closed\n");
 
-    close(sockfd);
+    close(sock_desc);
+
     return 0;
 }
