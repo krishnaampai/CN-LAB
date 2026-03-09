@@ -7,78 +7,76 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
-#define BUF_SIZE 256
-
-int main(int argc, char *argv[])
+int main()
 {
+    char buf[100], msg[100];
+    int k;
+    socklen_t len;
+
+    int sock_desc;
     struct sockaddr_in server, client;
-    char str[50], msg[20];
 
-    if (argc != 2)
-        printf("Input format not correct");
-
-    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockfd == -1)
-        printf("Error in socket()");
+    sock_desc = socket(AF_INET, SOCK_DGRAM, 0);
+    if (sock_desc == -1)
+        printf("Error in socket creation");
 
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = htons(atoi(argv[1]));
+    server.sin_port = htons(2500);   // fixed port
 
-    if (bind(sockfd, (struct sockaddr *)&server, sizeof(server)) < 0)
-        printf("Error in bind()\n");
+    k = bind(sock_desc, (struct sockaddr *)&server, sizeof(server));
+    if (k == -1)
+        printf("Error in binding");
 
-    socklen_t client_len = sizeof(client);
+    len = sizeof(client);
 
     printf("Server waiting...\n");
-    sleep(3);
 
-    /* Receive first message */
-    recvfrom(sockfd, str, 100, 0, (struct sockaddr *)&client, &client_len);
-    printf("Got message from client: %s\n", str);
+    /* Greeting */
+    k = recvfrom(sock_desc, buf, 100, 0, (struct sockaddr *)&client, &len);
+    printf("Message from client: %s\n", buf);
 
-    /* Send greeting */
-    strcpy(str, "220 127.0.0.1");
-    sendto(sockfd, str, sizeof(str), 0, (struct sockaddr *)&client, sizeof(client));
+    strcpy(buf, "220 SMTP Ready");
+    sendto(sock_desc, buf, 100, 0, (struct sockaddr *)&client, sizeof(client));
 
     /* HELO */
-    recvfrom(sockfd, str, sizeof(str), 0, (struct sockaddr *)&client, &client_len);
-    printf("%s\n", str);
+    recvfrom(sock_desc, buf, 100, 0, (struct sockaddr *)&client, &len);
+    printf("%s\n", buf);
 
-    strcpy(str, "250 ok");
-    sendto(sockfd, str, sizeof(str), 0, (struct sockaddr *)&client, sizeof(client));
+    strcpy(buf, "250 OK");
+    sendto(sock_desc, buf, 100, 0, (struct sockaddr *)&client, sizeof(client));
 
     /* MAIL FROM */
-    recvfrom(sockfd, str, sizeof(str), 0, (struct sockaddr *)&client, &client_len);
-    printf("%s\n", str);
+    recvfrom(sock_desc, buf, 100, 0, (struct sockaddr *)&client, &len);
+    printf("%s\n", buf);
 
-    strcpy(str, "250 ok");
-    sendto(sockfd, str, sizeof(str), 0, (struct sockaddr *)&client, sizeof(client));
+    strcpy(buf, "250 OK");
+    sendto(sock_desc, buf, 100, 0, (struct sockaddr *)&client, sizeof(client));
 
     /* RCPT TO */
-    recvfrom(sockfd, str, sizeof(str), 0, (struct sockaddr *)&client, &client_len);
-    printf("%s\n", str);
+    recvfrom(sock_desc, buf, 100, 0, (struct sockaddr *)&client, &len);
+    printf("%s\n", buf);
 
-    strcpy(str, "250 ok");
-    sendto(sockfd, str, sizeof(str), 0, (struct sockaddr *)&client, sizeof(client));
+    strcpy(buf, "250 OK");
+    sendto(sock_desc, buf, 100, 0, (struct sockaddr *)&client, sizeof(client));
 
     /* DATA */
-    recvfrom(sockfd, str, sizeof(str), 0, (struct sockaddr *)&client, &client_len);
-    printf("%s\n", str);
+    recvfrom(sock_desc, buf, 100, 0, (struct sockaddr *)&client, &len);
+    printf("%s\n", buf);
 
-    strcpy(str, "354 Go ahead");
-    sendto(sockfd, str, sizeof(str), 0, (struct sockaddr *)&client, sizeof(client));
+    strcpy(buf, "354 Start Mail Input");
+    sendto(sock_desc, buf, 100, 0, (struct sockaddr *)&client, sizeof(client));
 
-    /* Receive mail body */
-    recvfrom(sockfd, msg, sizeof(msg), 0, (struct sockaddr *)&client, &client_len);
+    /* Mail body */
+    recvfrom(sock_desc, msg, 100, 0, (struct sockaddr *)&client, &len);
     printf("Mail body received: %s\n", msg);
 
     /* QUIT */
-    recvfrom(sockfd, str, sizeof(str), 0, (struct sockaddr *)&client, &client_len);
+    recvfrom(sock_desc, buf, 100, 0, (struct sockaddr *)&client, &len);
 
-    strcpy(str, "221 OK");
-    sendto(sockfd, str, sizeof(str), 0, (struct sockaddr *)&client, sizeof(client));
+    strcpy(buf, "221 Closing Connection");
+    sendto(sock_desc, buf, 100, 0, (struct sockaddr *)&client, sizeof(client));
 
-    close(sockfd);
+    close(sock_desc);
     return 0;
 }
