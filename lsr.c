@@ -1,57 +1,104 @@
 #include <stdio.h>
 
 int main(){
-	int n,cost[10][10],distance[10];
-	int prev[10],src,visited[10],count,next;
-	
-	printf("Enter no. of nodes: ");
-	scanf("%d",&n);
-	printf("Enter cost matrix:\n");
-	for(int i =0;i<n;i++){
-		for(int j =0;j<n;j++){
-			scanf("%d",&cost[i][j]); //999 for infinity
-		}
-	}
-	printf ("Enter source node: ");
-	scanf("%d",&src);
-	
-	for(int i =0;i<n;i++){
-		distance[i] = cost[src][i];
-		visited[i] = 0;
-		prev[i] = src;
-	}
-	visited[src] = 1;
-	count = 1;
-	while(count < n-1){
-		int minDistance = 999;
-		for(int i =0;i < n; i++){
-			if(distance[i]<minDistance && !visited[i]){
-				minDistance = distance[i]; 
-				next = i; 
-			}
-		}
-		visited[next] = 1;
-		for(int i =0;i<n;i++){
-			if(!visited[i]){
-				if(minDistance + cost[next][i] < distance[i]){
-					distance[i]=minDistance+cost[next][i];
-					prev[i] = next;
-				}
-			}
-		}
-		count++;	
-	}
-	for (int i =0;i<n;i++){
-		if(i!=src){
-			printf("\nDistance to node %d = %d",i,distance[i]);
-			printf("\nPath = %d",i);
-			int j=i;
-			while(j!=src){
-				j = prev[j];
-				printf(" <- %d",j);
-			}
-			printf("\n");
-		}
-	}
-	return 0;
+
+    int n, src, next_hop;
+    int cost[10][10], visited[10];
+    int distance[10], next[10];
+
+    printf("Enter no. of nodes: ");
+    scanf("%d",&n);
+
+    printf("Enter cost matrix:(enter 999 for infinity)\n");
+
+    for(int i =0; i<n; i++){
+        for(int j =0; j<n; j++){
+
+            scanf("%d",&cost[i][j]);
+        }
+    }
+
+    printf("Enter src: ");
+    scanf("%d",&src);
+
+    // initialization
+    for(int i =0; i<n; i++){
+
+        distance[i] = cost[src][i];
+        visited[i] =0;
+
+        if(i != src && distance[i] != 999)
+            next[i] = i;
+
+        else
+            next[i] = -1;
+    }
+
+    visited[src] =1;
+
+    int count =1;
+
+    while(count < n-1){
+
+        int minDistance = 999;
+
+        next_hop = -1;
+
+        // find nearest node
+        for(int i =0; i<n; i++){
+
+            if(!visited[i] &&
+               distance[i] < minDistance){
+
+                minDistance  = distance[i];
+                next_hop = i;
+            }
+        }
+
+        if(next_hop == -1){
+            break;
+        }
+
+        visited[next_hop] = 1;
+
+        // update distances
+        for(int i =0; i<n; i++){
+
+            if(!visited[i] &&
+               cost[next_hop][i] != 999 &&
+               distance[i] >
+               distance[next_hop] + cost[next_hop][i]){
+
+                distance[i] =
+                    distance[next_hop] + cost[next_hop][i];
+
+                next[i] = next[next_hop];
+            }
+        }
+
+        count++;
+    }
+
+    // display
+    printf("\nRouting table of %d\n",src);
+
+    printf("Router\tDistance\tNext Hop\n");
+
+    for(int i =0; i<n; i++){
+
+        if(distance[i] == 999){
+
+            printf("%d\t999\t\t-\n",i);
+        }
+
+        else{
+
+            printf("%d\t%d\t\t%d\n",
+                   i,
+                   distance[i],
+                   next[i]);
+        }
+    }
+
+    return 0;
 }

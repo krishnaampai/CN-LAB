@@ -13,70 +13,101 @@ int main()
     int k;
     socklen_t len;
 
-    int sock_desc;
+    int sock_desc, temp_sock_desc;
+
     struct sockaddr_in server, client;
 
-    sock_desc = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sock_desc == -1)
+    // Create socket
+    sock_desc = socket(AF_INET, SOCK_STREAM, 0);
+
+    if(sock_desc == -1)
         printf("Error in socket creation");
 
+    // Server configuration
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = INADDR_ANY;
-    server.sin_port = htons(2500);   // fixed port
+    server.sin_port = htons(2500);
 
-    k = bind(sock_desc, (struct sockaddr *)&server, sizeof(server));
-    if (k == -1)
+    // Bind
+    k = bind(sock_desc,
+             (struct sockaddr *)&server,
+             sizeof(server));
+
+    if(k == -1)
         printf("Error in binding");
+
+    // Listen
+    listen(sock_desc, 5);
 
     len = sizeof(client);
 
+    // Accept connection
+    temp_sock_desc =
+        accept(sock_desc,
+               (struct sockaddr *)&client,
+               &len);
+
     printf("Server waiting...\n");
 
-    /* Greeting */
-    k = recvfrom(sock_desc, buf, 100, 0, (struct sockaddr *)&client, &len);
+    // Greeting
+    recv(temp_sock_desc, buf, 100, 0);
+
     printf("Message from client: %s\n", buf);
 
     strcpy(buf, "220 SMTP Ready");
-    sendto(sock_desc, buf, 100, 0, (struct sockaddr *)&client, sizeof(client));
 
-    /* HELO */
-    recvfrom(sock_desc, buf, 100, 0, (struct sockaddr *)&client, &len);
+    send(temp_sock_desc, buf, 100, 0);
+
+    // HELO
+    recv(temp_sock_desc, buf, 100, 0);
+
     printf("%s\n", buf);
 
     strcpy(buf, "250 OK");
-    sendto(sock_desc, buf, 100, 0, (struct sockaddr *)&client, sizeof(client));
 
-    /* MAIL FROM */
-    recvfrom(sock_desc, buf, 100, 0, (struct sockaddr *)&client, &len);
+    send(temp_sock_desc, buf, 100, 0);
+
+    // MAIL FROM
+    recv(temp_sock_desc, buf, 100, 0);
+
     printf("%s\n", buf);
 
     strcpy(buf, "250 OK");
-    sendto(sock_desc, buf, 100, 0, (struct sockaddr *)&client, sizeof(client));
 
-    /* RCPT TO */
-    recvfrom(sock_desc, buf, 100, 0, (struct sockaddr *)&client, &len);
+    send(temp_sock_desc, buf, 100, 0);
+
+    // RCPT TO
+    recv(temp_sock_desc, buf, 100, 0);
+
     printf("%s\n", buf);
 
     strcpy(buf, "250 OK");
-    sendto(sock_desc, buf, 100, 0, (struct sockaddr *)&client, sizeof(client));
 
-    /* DATA */
-    recvfrom(sock_desc, buf, 100, 0, (struct sockaddr *)&client, &len);
+    send(temp_sock_desc, buf, 100, 0);
+
+    // DATA
+    recv(temp_sock_desc, buf, 100, 0);
+
     printf("%s\n", buf);
 
     strcpy(buf, "354 Start Mail Input");
-    sendto(sock_desc, buf, 100, 0, (struct sockaddr *)&client, sizeof(client));
 
-    /* Mail body */
-    recvfrom(sock_desc, msg, 100, 0, (struct sockaddr *)&client, &len);
+    send(temp_sock_desc, buf, 100, 0);
+
+    // Mail body
+    recv(temp_sock_desc, msg, 100, 0);
+
     printf("Mail body received: %s\n", msg);
 
-    /* QUIT */
-    recvfrom(sock_desc, buf, 100, 0, (struct sockaddr *)&client, &len);
+    // QUIT
+    recv(temp_sock_desc, buf, 100, 0);
 
     strcpy(buf, "221 Closing Connection");
-    sendto(sock_desc, buf, 100, 0, (struct sockaddr *)&client, sizeof(client));
 
+    send(temp_sock_desc, buf, 100, 0);
+
+    close(temp_sock_desc);
     close(sock_desc);
+
     return 0;
 }

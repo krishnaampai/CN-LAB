@@ -1,73 +1,48 @@
 #include <stdio.h>
 
-struct router
-{
-    int cost[20];
-    int from[20];
-} routingTable[10];
+int main(){
 
-int main()
-{
-    int costmat[20][20];
-    int n, i, j, k;
-    int otherShorterPathExists;
-
-    printf("Enter the number of routers : ");
-    scanf("%d", &n);
-
-    printf("Enter the cost matrix :\n");
-
-    for (i = 0; i < n; i++)
-    {
-        for (j = 0; j < n; j++)
-        {
-            scanf("%d", &costmat[i][j]);
-
-            routingTable[i].cost[j] = costmat[i][j];
-            routingTable[i].from[j] = j;
-        }
-    }
-
-    do
-    {
-        otherShorterPathExists = 0;
-
-        for (i = 0; i < n; i++)
-        {
-            for (j = 0; j < n; j++)
-            {
-                for (k = 0; k < n; k++)
-                {
-                    if (routingTable[i].cost[j] > costmat[i][k] + routingTable[k].cost[j])
-                    {
-                        routingTable[i].cost[j] =
-                            routingTable[i].cost[k] +
-                            routingTable[k].cost[j];
-
-                        routingTable[i].from[j] = k;
-
-                        otherShorterPathExists = 1;
-                    }
-                }
-            }
-        }
-
-    } while (otherShorterPathExists != 0);
-
-    for (i = 0; i < n; i++)
-    {
-        printf("\n\nFor router %d\n", i + 1);
-
-        for (j = 0; j < n; j++)
-        {
-            printf("Router %d via %d distance %d\n",
-                   j + 1,
-                   routingTable[i].from[j] + 1,
-                   routingTable[i].cost[j]);
-        }
-    }
-
-    printf("\n");
-
-    return 0;
+	int cost[10][10],dist[10][10],next[10][10];
+	int n;	
+	
+	printf("Enter no. of routers: ");
+	scanf("%d",&n);
+	
+	printf("enter cost matrix:(enter 999 for inifinity) \n");
+	for(int i =0;i<n;i++){
+		for(int j =0;j<n;j++){
+			scanf("%d",&cost[i][j]);
+			dist[i][j] = cost[i][j];
+			next[i][j] = j;
+		}
+	}
+	
+	int shorter_exists = 1;
+	while(shorter_exists){
+		shorter_exists =0;
+		for(int i =0;i<n;i++){
+			for(int j =0;j<n;j++){
+				for(int k=0;k<n;k++){
+					if(dist[i][j] > dist[i][k] + dist[k][j]){
+						dist[i][j] =dist[i][k] + dist[k][j];
+						next[i][j] = next[i][k];
+						shorter_exists =1;
+					}
+				}
+			}
+		}
+		
+	}
+	
+	//dispaly
+	for(int i =0;i<n;i++){
+		printf("\nRouter %d\n",i+1);
+		for(int j =0;j<n;j++){
+			printf("Distance to router %d is %d via %d\n",j+1,dist[i][j],next[i][j] +1);
+		}
+		printf("\n");
+	}
+	return 0;
+	
+	
 }
